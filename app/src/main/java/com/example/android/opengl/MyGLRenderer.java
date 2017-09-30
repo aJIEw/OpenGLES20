@@ -15,6 +15,7 @@
  */
 package com.example.android.opengl;
 
+import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
@@ -23,6 +24,8 @@ import android.util.Log;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
+
+import static com.example.android.opengl.TextRenderer.drawText;
 
 /**
  * Provides drawing instructions for a GLSurfaceView object. This class
@@ -59,6 +62,12 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
 
     private volatile float mAngle;
 
+    private Context mContext;
+
+    public MyGLRenderer(Context context) {
+        mContext = context;
+    }
+
     /**
      * This method is called once when creating the attached surface view is created
      *
@@ -68,12 +77,12 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
     @Override
     public void onSurfaceCreated(GL10 unused, EGLConfig config) {
 
-        // Set the background frame color to black
-        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        // Set the background frame color
+        GLES20.glClearColor(0.0f, 1.0f, 0.0f, 0.4f);
 
         //mTriangle = new Triangle();
         //mSquare = new Square();
-        mPentagon = new Pentagon();
+        mPentagon = new Pentagon(mContext);
     }
 
     @Override
@@ -98,25 +107,32 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         //mSquare.draw(mMVPMatrix);
 
         // Draw pentagon
-        mPentagon.draw(mMVPMatrix);
+        //mPentagon.draw(mMVPMatrix);
 
-        // Create a rotation for the triangle
+        drawText(this.mContext, new int[1], "Aaron is cute!");
 
+        //setRotate();
+
+        // Draw triangle
+        //mTriangle.draw(scratch);
+    }
+
+    /**
+     * Create a rotation for the triangle
+     * */
+    private void setRotate(float[] scratch) {
         // Use the following code to generate constant rotation.
-        // Leave this code out when using TouchEvents.
-         long time = SystemClock.uptimeMillis() % 4000L;
-         float angle = 0.090f * ((int) time);
+        // Comment this code when using TouchEvents.
+        long time = SystemClock.uptimeMillis() % 4000L;
+        float angle = 0.090f * ((int) time);
 
-        Matrix.setRotateM(mRotationMatrix, 0, mAngle, 0, 0, 1.0f);
-        //Matrix.setRotateM(mRotationMatrix, 0, angle, 0, 0, 1.0f);
+        //Matrix.setRotateM(mRotationMatrix, 0, mAngle, 0, 0, 1.0f);
+        Matrix.setRotateM(mRotationMatrix, 0, angle, 0, 0, 1.0f);
 
         // Combine the rotation matrix with the projection and camera view
         // Note that the mMVPMatrix factor *must be first* in order
         // for the matrix multiplication product to be correct.
         Matrix.multiplyMM(scratch, 0, mMVPMatrix, 0, mRotationMatrix, 0);
-
-        // Draw triangle
-        //mTriangle.draw(scratch);
     }
 
     @Override

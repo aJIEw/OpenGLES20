@@ -1,5 +1,6 @@
 package com.example.android.opengl;
 
+import android.content.Context;
 import android.opengl.GLES20;
 
 import java.nio.ByteBuffer;
@@ -35,6 +36,10 @@ public class Pentagon {
     private int mColorHandle;
     private int mMVPMatrixHandle;
 
+    private Context mContext;
+
+    private int[] textures = new int[1];
+
     // number of coordinates per vertex in this array
     static final int COORDS_PER_VERTEX = 3;
 
@@ -57,7 +62,9 @@ public class Pentagon {
 
     float color[] = {0.2f, 0.709803922f, 0.898039216f, 1.0f};
 
-    public Pentagon() {
+    public Pentagon(Context context) {
+        mContext = context;
+
         // initialize vertex byte buffer for shape coordinates
         ByteBuffer bb = ByteBuffer.allocateDirect(
                 // (# of coordinate values * 4 bytes per float)
@@ -120,7 +127,7 @@ public class Pentagon {
         GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false, mvpMatrix, 0);
         MyGLRenderer.checkGlError("glUniformMatrix4fv");
 
-        // Draw the square
+        // Draw the pentagon
         GLES20.glDrawElements(
                 GLES20.GL_TRIANGLES, drawOrder.length,
                 GLES20.GL_UNSIGNED_SHORT, drawListBuffer);
