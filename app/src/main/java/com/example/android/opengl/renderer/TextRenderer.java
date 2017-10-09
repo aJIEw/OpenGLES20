@@ -1,4 +1,4 @@
-package com.example.android.opengl;
+package com.example.android.opengl.renderer;
 
 
 import android.content.Context;
@@ -10,6 +10,8 @@ import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.GLUtils;
 import android.util.Log;
+
+import com.example.android.opengl.R;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;

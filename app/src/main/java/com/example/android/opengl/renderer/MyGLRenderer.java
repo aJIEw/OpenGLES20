@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.example.android.opengl;
+package com.example.android.opengl.renderer;
 
 import android.content.Context;
 import android.opengl.GLES20;
@@ -22,10 +22,12 @@ import android.opengl.Matrix;
 import android.os.SystemClock;
 import android.util.Log;
 
+import com.example.android.opengl.graphics.Pentagon;
+import com.example.android.opengl.graphics.Square;
+import com.example.android.opengl.graphics.Triangle;
+
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
-
-import static com.example.android.opengl.TextRenderer.drawText;
 
 /**
  * Provides drawing instructions for a GLSurfaceView object. This class
@@ -78,11 +80,11 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
     public void onSurfaceCreated(GL10 unused, EGLConfig config) {
 
         // Set the background frame color
-        GLES20.glClearColor(0.0f, 1.0f, 0.0f, 0.4f);
+        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0.4f);
 
         //mTriangle = new Triangle();
-        //mSquare = new Square();
-        mPentagon = new Pentagon(mContext);
+        mSquare = new Square(mContext);
+        //mPentagon = new Pentagon(mContext);
     }
 
     @Override
@@ -104,12 +106,12 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mViewMatrix, 0);
 
         // Draw square
-        //mSquare.draw(mMVPMatrix);
+        mSquare.draw(mMVPMatrix);
 
         // Draw pentagon
         //mPentagon.draw(mMVPMatrix);
 
-        drawText(this.mContext, new int[1], "Aaron is cute!");
+        //drawText(this.mContext, new int[1], "Aaron is cute!");
 
         //setRotate();
 

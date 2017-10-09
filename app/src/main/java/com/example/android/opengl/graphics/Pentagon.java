@@ -1,7 +1,9 @@
-package com.example.android.opengl;
+package com.example.android.opengl.graphics;
 
 import android.content.Context;
 import android.opengl.GLES20;
+
+import com.example.android.opengl.renderer.MyGLRenderer;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
