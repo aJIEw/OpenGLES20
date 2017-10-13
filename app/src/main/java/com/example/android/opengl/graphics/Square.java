@@ -16,16 +16,23 @@
 package com.example.android.opengl.graphics;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
+import android.opengl.GLUtils;
 
 import com.example.android.opengl.R;
 import com.example.android.opengl.renderer.MyGLRenderer;
+import com.example.android.opengl.util.GraphicTools;
+import com.example.android.opengl.util.TextManager;
+import com.example.android.opengl.util.TextObject;
 import com.example.android.opengl.util.TextureHelper;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
+import java.util.Random;
 
 /**
  * A two-dimensional square for use as a drawn object in OpenGL ES 2.0.
@@ -43,8 +50,8 @@ public class Square {
                     // The matrix must be included as a modifier of gl_Position.
                     // Note that the uMVPMatrix factor *must be first* in order
                     // for the matrix multiplication product to be correct.
-                    "  gl_Position = uMVPMatrix * vPosition;" +
                     "  v_TexCoordinate = a_TexCoordinate;" +
+                    "  gl_Position = uMVPMatrix * vPosition;" +
                     "}";
 
     private final String fragmentShaderCode =
@@ -120,6 +127,12 @@ public class Square {
 
     float color[] = { 0.2f, 0.709803922f, 0.898039216f, 1.0f };
 
+    private TextManager mTextManager;
+
+    public static float uvs[];
+
+    public FloatBuffer uvBuffer;
+
     /**
      * Sets up the drawing object data for use in an OpenGL ES context.
      */
@@ -168,6 +181,100 @@ public class Square {
         GLES20.glAttachShader(mProgram, vertexShader);   // add the vertex shader to program
         GLES20.glAttachShader(mProgram, fragmentShader); // add the fragment shader to program
         GLES20.glLinkProgram(mProgram);                  // create OpenGL program executables
+
+        setupImage();
+        setupText();
+
+        int textVertShader = GraphicTools.loadShader(GLES20.GL_VERTEX_SHADER, GraphicTools.vs_Text);
+        int textFragShader = GraphicTools.loadShader(GLES20.GL_FRAGMENT_SHADER, GraphicTools.fs_Text);
+
+        GraphicTools.sp_Text = GLES20.glCreateProgram();
+        GLES20.glAttachShader(GraphicTools.sp_Text, textVertShader);
+        GLES20.glAttachShader(GraphicTools.sp_Text, textFragShader);
+        GLES20.glLinkProgram(GraphicTools.sp_Text);
+    }
+
+    public void setupImage() {
+        // We will use a randomizer for randomizing the textures from texture atlas.
+        // This is strictly optional as it only effects the output of our app,
+        // Not the actual knowledge.
+        Random rnd = new Random();
+
+        // 30 imageobjects times 4 vertices times (u and v)
+        uvs = new float[30 * 4 * 2];
+
+        // We will make 30 randomly textures objects
+        for (int i = 0; i < 30; i++) {
+            int random_u_offset = rnd.nextInt(2);
+            int random_v_offset = rnd.nextInt(2);
+
+            // Adding the UV's using the offsets
+            uvs[(i * 8) + 0] = random_u_offset * 0.5f;
+            uvs[(i * 8) + 1] = random_v_offset * 0.5f;
+            uvs[(i * 8) + 2] = random_u_offset * 0.5f;
+            uvs[(i * 8) + 3] = (random_v_offset + 1) * 0.5f;
+            uvs[(i * 8) + 4] = (random_u_offset + 1) * 0.5f;
+            uvs[(i * 8) + 5] = (random_v_offset + 1) * 0.5f;
+            uvs[(i * 8) + 6] = (random_u_offset + 1) * 0.5f;
+            uvs[(i * 8) + 7] = random_v_offset * 0.5f;
+        }
+
+        // The texture buffer
+        ByteBuffer bb = ByteBuffer.allocateDirect(uvs.length * 4);
+        bb.order(ByteOrder.nativeOrder());
+        uvBuffer = bb.asFloatBuffer();
+        uvBuffer.put(uvs);
+        uvBuffer.position(0);
+
+        // Generate Textures, if more needed, alter these numbers.
+        int[] texturenames = new int[2];
+        GLES20.glGenTextures(2, texturenames, 0);
+
+        // Temporary create a bitmap
+        Bitmap bmp = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.ic_launcher);
+
+        // Bind texture to texturename
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texturenames[0]);
+
+        // Set filtering
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
+
+        // Load the bitmap into the bound texture.
+        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bmp, 0);
+
+        // We are done using the bitmap so we should recycle it.
+        bmp.recycle();
+
+        // Again for the text texture
+        bmp = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.font);
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0 + 1);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texturenames[1]);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
+        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bmp, 0);
+        bmp.recycle();
+    }
+
+    private void setupText() {
+        // Create our text manager
+        mTextManager = new TextManager();
+
+        // Tell our text manager to use index 1 of textures loaded
+        mTextManager.setTextureID(1);
+
+        // Pass the uniform scale
+        mTextManager.setUniformscale(1.0f);
+
+        // Create our new text object
+        TextObject txt = new TextObject("Aaron is cute!", 10f, 10f);
+
+        // Add it to our manager
+        mTextManager.addText(txt);
+
+        // Prepare the text for rendering
+        mTextManager.prepareDraw();
     }
 
     /**
@@ -209,7 +316,7 @@ public class Square {
         MyGLRenderer.checkGlError("glUniformMatrix4fv");
 
         // load texture
-        mTextureDataHandle = TextureHelper.loadText(mContext, "Aaron is cute", R.drawable.bumpy_bricks_public_domain);
+        mTextureDataHandle = TextureHelper.loadTexture(mContext, R.drawable.globe);
         mTextureUniformHandle = GLES20.glGetUniformLocation(mProgram, "u_Texture");
         mTextureCoordinateHandle = GLES20.glGetAttribLocation(mProgram, "a_TexCoordinate");
 
@@ -219,16 +326,19 @@ public class Square {
                 0, mCubeTextureCoordinates);
 
         // Set the active texture unit to texture unit 0.
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        //GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         // Bind the texture to this unit.
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextureDataHandle);
+        //GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextureDataHandle);
         // Tell the texture uniform sampler to use this texture in the shader by binding to texture unit 0.
-        GLES20.glUniform1i(mTextureUniformHandle, 0);
+        //GLES20.glUniform1i(mTextureUniformHandle, 0);
 
         // Draw the square
         GLES20.glDrawElements(
                 GLES20.GL_TRIANGLES, drawOrder.length,
                 GLES20.GL_UNSIGNED_SHORT, drawListBuffer);
+
+        if (mTextManager != null)
+            mTextManager.draw(mvpMatrix);
 
         // Disable vertex array
         GLES20.glDisableVertexAttribArray(mPositionHandle);
